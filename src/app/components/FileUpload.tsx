@@ -5,12 +5,24 @@ import { useState } from 'react';
 interface FileUploadProps {
   filesUploaded: File[];
   setFilesUploaded: React.Dispatch<React.SetStateAction<File[]>>;
+  setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
+  setReferences: React.Dispatch<React.SetStateAction<any[]>>;
+
 }
 
-export default function FileUpload({ filesUploaded, setFilesUploaded }: FileUploadProps) { // Update state in the parent component
+
+export default function FileUpload({ filesUploaded, setFilesUploaded, setLearnReady, setReferences}: FileUploadProps) { // Update state in the parent component
   
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+
+    setLearnReady(false)
+    setReferences([])
+      
+    const cleanup = await fetch('/api/cleanup', {
+        method: 'GET', 
+    });
+
     const files = event.target.files;
     if (files) {
       const fileArray = Array.from(files);

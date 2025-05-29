@@ -2,16 +2,15 @@
 
 import { useState } from 'react';
 
-interface FileUploadProps {
+interface LearnButtonProps {
   filesUploaded: File[];
-  setFilesUploaded: React.Dispatch<React.SetStateAction<File[]>>;
+  setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function LearnButton({ filesUploaded, setFilesUploaded }: FileUploadProps) {
+export default function LearnButton({ filesUploaded, setLearnReady }: LearnButtonProps) {
   const processFiles = async () => {
     try {
       console.log('Processing files...');
-
 
       const formData = new FormData();
       filesUploaded.forEach((file) => {
@@ -40,6 +39,19 @@ export default function LearnButton({ filesUploaded, setFilesUploaded }: FileUpl
 
         console.log(data)
 
+        if (data.status == 400){
+          throw new Error(`HTTP error! status: ${data.status} message: ${data.error}`);
+        }
+        else if(data.status == 200){
+          console.log(`status: ${data.status} message: ${data.message}`)
+          setLearnReady(true)
+
+
+        }
+        else{
+          console.error('Internal Error Learn Process...');
+        }
+
       }
 
       // Parse the JSON response
@@ -50,6 +62,7 @@ export default function LearnButton({ filesUploaded, setFilesUploaded }: FileUpl
 
   return (
     <button
+    
       type="button"
       onClick={processFiles}
       className="text-white bg-gradient-to-r from-cyan-500 to-blue-500 my-5 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 rounded-xl text-lg px-8 py-4 text-center"

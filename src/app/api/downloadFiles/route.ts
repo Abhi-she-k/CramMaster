@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server';
-import multer from 'multer';
 import path from "path";
-import { writeFile } from "fs/promises";
-import { stat, write } from 'fs';
+import { writeFile, unlink } from "fs/promises";
 
 const fs = require('fs');
 
@@ -12,27 +10,36 @@ export async function POST(req: NextRequest){
     var files = await req.formData();
 
     const fileStoragePath = 'tmp/uploads'
-    // const directoryContent =  fs.readdirSync(fileStoragePath);
 
-    // console.log(directoryContent)
+    console.log("Downloading Files...")
+        
+    const directoryContent =  fs.readdirSync(fileStoragePath);
 
-    // if(directoryContent.length > 0){
-            
-    //   directoryContent.forEach(async (fileName: string) => {
-    //     console.log(path.join(fileStoragePath, fileName))
-    //     await fs.rm(path.join(fileStoragePath, fileName), (err: any) =>{
-    //       if(err){
-    //         return new Response(JSON.stringify({error: "Error removing content in 'tmp/uploads' folder", status: 400 }))
-    //       }
-    //     });
-    //   });
-    // }
+    console.log("Cleaning up...")
+
+    console.log(directoryContent)
+
+    if (directoryContent.length > 0) {
+        directoryContent.map(async (fileName: string) => {
+        const filePath = path.join(fileStoragePath, fileName);
+        try {
+          await unlink(filePath);
+          console.log(`Deleted file: ${filePath}`);
+        } catch (err) {
+          console.log(err);
+        }
+      })
+
+    }
+    console.log(directoryContent)
 
     if(Array.from(files.keys()).length === 0) {
 
       return new Response(JSON.stringify({ error: "No files found", status: 400 }));
 
     }  
+
+    console.log(files)
   
     files.forEach(async (file) => {
       if (file instanceof File) {
