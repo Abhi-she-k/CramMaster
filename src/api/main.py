@@ -1,12 +1,16 @@
 from fastapi import FastAPI
-from functions.sentenceExtraction import sentenceExtraction
 from fastapi.middleware.cors import CORSMiddleware
 from os import listdir
 from os.path import isfile, join
 
-from functions.sentenceExtraction import sentenceExtraction
+from functions.textChuncking import textChuncking
 from functions.getVectorEmbedding import getVectorEmbedding
 from functions.vectorDB import writeToQdrantDB
+from functions.vectorDB import queryQdrantDB
+from functions.vectorDB import cleanUP
+from functions.generateAnswer import generateAnswer
+
+from pydantic import BaseModel
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -17,6 +21,9 @@ app.add_middleware(
     allow_origins=["http://localhost:3000/"],
 )
 
+class AskRequest(BaseModel):
+    data: str
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -24,48 +31,87 @@ async def root():
 @app.get("/learn")
 def learn():
         
-    print("hello")
-
     path = 'C:/Users/abhis/Desktop/Projects/crammaster.ai/CramMaster/tmp/uploads'
 
-    def processFile(file):
-
+    for file in listdir(path):
+        
         if (isfile(join(path, file))):
             
-            sentences = sentenceExtraction(join(path, file))
+            chunksResponse = textChuncking(join(path, file))
 
-            if (sentences.get("error") == "True"):
+            if (chunksResponse.get("error") == "True"):
                 return {
-                    "message": sentences.get("message"),
+                    "message": chunksResponse.get("message"),
                     "status": "400"
                 }
 
-            fileEmbeddings = []
+            vectorEmbeddings = getVectorEmbedding(chunksResponse.get("chunks"))
 
-            for sentence in sentences.get("sentences"):
-            
-                vectorEmbedding = getVectorEmbedding(sentence)
+            if (vectorEmbeddings.get("error") == "True"):
+                return {
+                    "message": vectorEmbeddings.get("message"),
+                    "status": "400"
+                }
 
-                if (vectorEmbedding.get("error") == "True"):
-                    return {
-                        "message": vectorEmbedding.get("message"),
-                        "status": "400"
-                    }
 
-                fileEmbeddings.append(vectorEmbedding)
-
-            dbWrite = writeToQdrantDB(fileEmbeddings, file)
+            dbWrite = writeToQdrantDB(vectorEmbeddings, file)
 
             if(dbWrite.get("error") == "True"):
                 return {
                     "message": dbWrite.get("message"),
                     "status": "400"
                 }
-            
-    with ThreadPoolExecutor() as executor:
-        list(executor.map(processFile, [file for file in listdir(path)]))
+        
 
     return {
         "message": "Learn Process Completed Successfully.",
         "status": "200"
     }
+
+@app.post("/ask/")
+def ask(question: AskRequest):
+
+    res = [] 
+    
+    question = question.data
+
+    queryEmbedding = getVectorEmbedding([question])
+
+    if (queryEmbedding.get("error") == "True"):
+        return {
+            "message": queryEmbedding.get("message"),
+            "status": "400"
+        }
+    
+    dbQuery = queryQdrantDB(queryEmbedding.get("embeddings")[0])
+
+    # print("DB Query: ", (dbQuery["results"]))
+
+    for results in (dbQuery["results"]):
+        for result in results[1]:
+            print("Result: ", result.payload)
+            res.append({"reference": result.payload["text"],
+                        "file": result.payload["fileName"]})
+
+    answer = generateAnswer(question,res)
+
+    if(answer.get("error") == "True"):
+        return {
+            "message": queryEmbedding.get("message"),
+            "status": "400"
+        }
+    else:      
+        return {
+            "answer": answer["message"], 
+            "references": res
+        }
+    
+@app.get("/cleanup")
+def cleanup():
+
+    cleanUP()
+    
+    
+    
+
+   
