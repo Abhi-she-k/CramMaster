@@ -36,11 +36,11 @@
 * * * * *
 
 ### **Endpoints**
-
+```
 -   `GET /learn` --- Ingest and index documents (RAG: Build knowledge base)
 -   `POST /ask/` --- Answer questions using RAG (retrieve + generate)
 -   `GET /cleanup` --- Remove all indexed data
-
+```
 * * * * *
 
 **This architecture enables CramMaster.ai to answer questions with high accuracy and transparency, always grounding responses in your uploaded documents.**
@@ -78,7 +78,7 @@ pip install -r requirements.txt
 ### c. Set Up Environment Variables
 ```
 Create a `.env` file in [api](vscode-file://vscode-app/c:/Users/abhis/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html) with your secrets (example):
-```
+
 QDRANT_URL=http://localhost:6333
 
 QDRANT_API_KEY=your_qdrant_api_key
@@ -88,9 +88,9 @@ TOGETHER_AI_API_KEY=your_together_api_key
 ### d. Run the FastAPI Server
 ```
 uvicorn main:app --reload
-```
-> Make sure you are in the [api](vscode-file://vscode-app/c:/Users/abhis/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html) directory.
 
+> Make sure you are in the [api](vscode-file://vscode-app/c:/Users/abhis/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html) directory.
+```
 * * * * *
 
 3\. Frontend (Next.js) Setup
