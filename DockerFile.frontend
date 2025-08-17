@@ -1,0 +1,29 @@
+# Building Next.js App
+
+FROM node:18-alpine AS builder
+WORKDIR /frontend
+
+COPY package.json ./
+COPY package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+COPY .env .env
+
+RUN npm run build
+
+# Runtime
+
+FROM node:18-alpine AS runner
+WORKDIR /frontend
+
+COPY --from=builder /frontend/.next ./.next
+COPY --from=builder /frontend/public ./public
+COPY --from=builder /frontend/node_modules ./node_modules
+COPY --from=builder /frontend/package.json ./package.json
+
+
+EXPOSE 3000
+ENV PORT=3000
+CMD ["npm", "start"]

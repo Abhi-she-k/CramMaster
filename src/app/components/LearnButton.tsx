@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-
 interface LearnButtonProps {
+  uploadReady: boolean;
   filesUploaded: File[];
   setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function LearnButton({ filesUploaded, setLearnReady }: LearnButtonProps) {
+export default function LearnButton({ filesUploaded, setLearnReady, uploadReady}: LearnButtonProps) {
+  
   const processFiles = async () => {
     try {
       console.log('Processing files...');
@@ -22,31 +22,28 @@ export default function LearnButton({ filesUploaded, setLearnReady }: LearnButto
         body: formData
       });
 
-      var data = await responseDownloadFiles.json();
+      const data_download = await responseDownloadFiles.json();
 
       // Check if the response is successful
-      if (data.status == 400) {
-        throw new Error(`HTTP error! status: ${data.status} message: ${data.error}`);
+      if (!responseDownloadFiles.ok) {
+        throw new Error(`HTTP error! status: ${data_download.status} message: ${data_download.error}`);
+
       }
       else{
-        console.log(`status: ${data.status} message: ${data.message}`)
+        console.log(`status: ${data_download.status} message: ${data_download.message}`)
         
         const responseLearn = await fetch('api/learn', {
           method: 'GET'
         })
 
-        var data = await responseLearn.json()
+        const data_response = await responseLearn.json()
 
-        console.log(data)
-
-        if (data.status == 400){
-          throw new Error(`HTTP error! status: ${data.status} message: ${data.error}`);
+        if (!responseLearn.ok){
+          throw new Error(`HTTP error! status: ${data_response.status} message: ${data_response.error}`);
         }
-        else if(data.status == 200){
-          console.log(`status: ${data.status} message: ${data.message}`)
+        else if(data_response.status == 200){
+          console.log(`status: ${data_response.status} message: ${data_response.message}`)
           setLearnReady(true)
-
-
         }
         else{
           console.error('Internal Error Learn Process...');
@@ -60,14 +57,20 @@ export default function LearnButton({ filesUploaded, setLearnReady }: LearnButto
     }
   };
 
-  return (
-    <button
-    
-      type="button"
-      onClick={processFiles}
-      className="text-white bg-gradient-to-r from-cyan-500 to-blue-500 my-5 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 rounded-xl text-lg px-8 py-4 text-center"
-    >
-      Study ⇒
-    </button>
-  );
+  if(uploadReady){
+
+    return (
+
+      <button
+      
+        type="button"
+        onClick={processFiles}
+        className="text-white bg-gradient-to-r from-cyan-500 to-blue-500 my-5 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 rounded-xl text-lg px-8 py-4 text-center"
+      >
+        Study ⇒
+      </button>
+    );
+      
+  }
+
 }

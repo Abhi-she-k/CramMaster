@@ -1,5 +1,19 @@
+# Node.js dependencies
 /node_modules
-/src/api/.venv
-/.next/
-.env*
-src/api/env/Lib/site-packages/pip/_vendor/certifi/cacert.pem
+
+# Python virtual environment
+.venv
+__pycache__
+env
+
+# Next.js build output
+.next/
+
+# Environment variables
+.env
+
+important_cmd
+
+manifest
+
+.gitignore

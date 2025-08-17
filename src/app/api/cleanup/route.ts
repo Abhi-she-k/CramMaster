@@ -1,53 +1,50 @@
-import { NextRequest } from 'next/server';
 import path from "path";
-import { writeFile, unlink } from "fs/promises";
+import { unlink } from "fs/promises";
+import fs from "fs";
 
+export async function GET() {
 
-const fs = require('fs');
+  const fileStoragePath = process.env.NEXT_PUBLIC_UPLOAD_DIR;
 
+  console.log("Cleaning up local files...");
 
-export async function GET(req: NextRequest){
+  try {
 
-    const fileStoragePath = 'tmp/uploads'
+    if (!fileStoragePath) {
+      throw new Error("UPLOAD_DIR environment variable is not defined");
+    }
 
-    console.log("Downloading Files...")
-        
-    const directoryContent =  fs.readdirSync(fileStoragePath);
+    const directoryContent = fs.readdirSync(fileStoragePath);
 
-    console.log("Cleaning up...")
-
-    console.log(directoryContent)
-
-    if (directoryContent.length > 0) {
-        directoryContent.map(async (fileName: string) => {
-        const filePath = path.join(fileStoragePath, fileName);
-        try {
+    for (const fileName of directoryContent) {
+      const filePath = path.join(fileStoragePath, fileName);
+      
+      try {
+        if (fs.statSync(filePath).isFile()){
           await unlink(filePath);
           console.log(`Deleted file: ${filePath}`);
-        } catch (err) {
-          console.log(err);
         }
-      })
 
+      } catch (err) {
+        console.error(`Failed to delete ${fileName}:`, err);
+      }
     }
-    console.log(directoryContent)
 
+    // Notify FastAPI backend
+    const askAPIResponse = await fetch(process.env.NEXT_PUBLIC_API_ENDPOINT+'cleanup', {
+      method: 'GET',
+    });
 
-    const askAPIResponse = await fetch('http://127.0.0.1:8000/cleanup',{
-        method: 'GET',
-    })
+    const data = await askAPIResponse.json();
 
-    const data = await askAPIResponse.json()
-
-    if(askAPIResponse.status == 400){
-        return new Response(JSON.stringify({ error: data.message , status: 400 }));
+    if (!askAPIResponse.ok) {
+      return new Response(JSON.stringify({ error: data.message || "Backend cleanup failed", status: askAPIResponse.status}));
     }
-    else{
-        return new Response(JSON.stringify({ message: "Clean up finished" , status: 200 }));
-    }
-    
 
-    
+    return new Response(JSON.stringify({ message: "Clean up finished", status: 200}));
+
+  } catch (err) {
+    console.error("Error during cleanup:", err);
+    return new Response(JSON.stringify({ error: "Cleanup failed", status: 500}));
+  }
 }
-
-   

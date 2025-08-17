@@ -2,3 +2,7 @@ node_modules
 .next
 .git
 .gitignore
+
+backend/api/__pycache__
+backend/api/.venv
+backend/app/functions/__pycache__

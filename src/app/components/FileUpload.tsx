@@ -1,32 +1,41 @@
 'use client';
 
 import React from 'react';
-import { useState } from 'react';
 interface FileUploadProps {
   filesUploaded: File[];
   setFilesUploaded: React.Dispatch<React.SetStateAction<File[]>>;
+  setUploadReady: React.Dispatch<React.SetStateAction<boolean>>;
   setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
+
   setReferences: React.Dispatch<React.SetStateAction<any[]>>;
 
 }
 
-
-export default function FileUpload({ filesUploaded, setFilesUploaded, setLearnReady, setReferences}: FileUploadProps) { // Update state in the parent component
+export default function FileUpload({ filesUploaded, setFilesUploaded, setLearnReady, setReferences, setUploadReady}: FileUploadProps) { // Update state in the parent component
   
   
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
-    setLearnReady(false)
     setReferences([])
       
     const cleanup = await fetch('/api/cleanup', {
         method: 'GET', 
     });
 
+    const data = await cleanup.json()
+
+    if(!cleanup.ok){
+      return new Response(JSON.stringify({ message: data.message || "Clean up request failed" }), {
+        status: data.status,
+      });
+    }
+    
     const files = event.target.files;
+
     if (files) {
       const fileArray = Array.from(files);
       setFilesUploaded(fileArray); // Update state in the parent component
+      setUploadReady(true)
     }
   };
 
@@ -45,6 +54,7 @@ export default function FileUpload({ filesUploaded, setFilesUploaded, setLearnRe
         accept=".pdf"
         multiple
         onChange={handleFileChange}
+        onClick={() => { setLearnReady(false); setUploadReady(false); }}
       />
       <div className="flex flex-row bg-gray-500/20 rounded-lg overflow-auto w-250 max-w-9/10 justify-center">
         {filesUploaded.length > 0 &&

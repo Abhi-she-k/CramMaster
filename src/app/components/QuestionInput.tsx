@@ -1,7 +1,6 @@
 'use client'
 
-import { NODE_ESM_RESOLVE_OPTIONS } from 'next/dist/build/webpack-config';
-import { useRef , useState } from 'react';
+import { useRef } from 'react';
 
 interface QuestionInputProps {
     learnReady: boolean;
@@ -64,7 +63,7 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
             
             <div className='text-center '>
                 <div className='flex-col justify-content' onChange={ handleTextInput }>
-                    <textarea id="message" ref ={textArea} rows={10} className="w-200 block p-2.5 w-2xl text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter Your Question Here..."></textarea>
+                    <textarea id="message" ref ={textArea} rows={10} className="w-200 block p-2.5 w-2xl text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter Your Question Here..."></textarea>
                 </div>
 
                 <button
@@ -76,10 +75,10 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
                 </button>
 
                 <div className='flex-col justify-content'>
-                    <textarea id="response" ref = { answerArea }rows={10} className="w-200 block p-2.5 w-2xl text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"></textarea>
+                    <textarea id="response" ref = { answerArea }rows={10} className="w-200 block p-2.5 w-2xl text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"></textarea>
                 </div>
 
-                <table className="mt-10 w-200 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed">
+                <table className="mt-10 w-200 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed mb-10">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" className="px-6 py-3">
@@ -101,7 +100,7 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
                                 {item.reference || item.text || ""}
                             </td>
 
-                                                        <td
+                            <td
                                 scope="row"
                                 className="px-6 py-4 font-medium text-gray-900 whitespace-normal break-words dark:text-white max-w-0"
                                 style={{ wordBreak: "break-word" }}
