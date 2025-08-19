@@ -6,35 +6,38 @@ interface FileUploadProps {
   setFilesUploaded: React.Dispatch<React.SetStateAction<File[]>>;
   setUploadReady: React.Dispatch<React.SetStateAction<boolean>>;
   setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
-
   setReferences: React.Dispatch<React.SetStateAction<any[]>>;
-
 }
 
 export default function FileUpload({ filesUploaded, setFilesUploaded, setLearnReady, setReferences, setUploadReady}: FileUploadProps) { // Update state in the parent component
   
-  
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
     setReferences([])
+
+    const UUID = localStorage.getItem("userId")
       
     const cleanup = await fetch('/api/cleanup', {
-        method: 'GET', 
+        method: 'POST', 
+        body: JSON.stringify({ uuid: UUID })
     });
 
-    const data = await cleanup.json()
+    const data = await cleanup.json();
 
-    if(!cleanup.ok){
-      return new Response(JSON.stringify({ message: data.message || "Clean up request failed" }), {
-        status: data.status,
-      });
+    if (!cleanup.ok) {
+      throw new Error(`HTTP error! status: ${cleanup.status} message: ${data?.message || "Clean up request failed"}`);
+    } else if (data.status === 200) {
+      console.log(`status: ${cleanup.status} message: ${data.message}`);
+  
+    } else {
+      console.error('Internal Error Clean Process...', data);
     }
     
     const files = event.target.files;
 
     if (files) {
       const fileArray = Array.from(files);
-      setFilesUploaded(fileArray); // Update state in the parent component
+      setFilesUploaded(fileArray);
       setUploadReady(true)
     }
   };

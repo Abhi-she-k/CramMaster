@@ -1,26 +1,26 @@
 import os
 import logging
-from fastapi import UploadFile, File, FastAPI, HTTPException
+from fastapi import UploadFile, File, FastAPI
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from os import listdir
 from os.path import isfile, join
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from apscheduler.schedulers.background import BackgroundScheduler
 
-# Local imports
+
 from functions.textChuncking import textChuncking
 from functions.getVectorEmbedding import getVectorEmbedding
-from functions.vectorDB import writeToQdrantDB, queryQdrantDB, cleanUP
+from functions.vectorDB import writeToQdrantDB, queryQdrantDB, global_clean_up, user_clean_up
 from functions.generateAnswer import generateAnswer
 
-# Load environment variables
 load_dotenv()
 
-# Initialize FastAPI app
 app = FastAPI()
+scheduler = BackgroundScheduler()
 
-# Enable CORS for frontend
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:80"],
@@ -29,25 +29,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Validate UPLOAD_DIR env variable
 UPLOAD_DIR = os.getenv("UPLOAD_DIR")
 
 if not UPLOAD_DIR:
     raise RuntimeError("UPLOAD_DIR is not set in the environment")
 
-
-# Pydantic model for POST /ask
-class AskRequest(BaseModel):
+class RequestData(BaseModel):
     data: str
 
+class RequestDataAsk(BaseModel):
+    UUID: str
+    question: str
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/learn")
-def learn():
+@app.post("/learn")
+def learn(request: RequestData):
+
+    UUID = request.data
+
     for file in listdir(UPLOAD_DIR):
         file_path = join(UPLOAD_DIR, file)
 
@@ -62,7 +65,7 @@ def learn():
                 logging.error(f"Embedding failed for {file}: {vector_embeddings.get('message')}")
                 return {"message": vector_embeddings.get("message"), "status": 400}
 
-            db_write = writeToQdrantDB(vector_embeddings, file)
+            db_write = writeToQdrantDB(vector_embeddings, file, UUID)
             if db_write.get("error") == "True":
                 logging.error(f"DB write failed for {file}: {db_write.get('message')}")
                 return {"message": db_write.get("message"), "status": 400}
@@ -71,44 +74,38 @@ def learn():
 
 
 @app.post("/ask")
-def ask(request: AskRequest):
-    user_question = request.data
-    res = []
-
+def ask(request: RequestDataAsk):
+    
+    UUID = request.UUID
+    user_question = request.question
+    references = []
 
     query_embedding = getVectorEmbedding([user_question])
     if query_embedding.get("error") == "True":
         return {"message": query_embedding.get("message"), "status": 400}
 
-    db_query = queryQdrantDB(query_embedding.get("embeddings")[0])
+    db_query = queryQdrantDB(query_embedding.get("embeddings")[0], UUID)
 
     for results in db_query.get("results", []):
         for result in results[1]:
-            res.append({
+
+            print(result)
+
+            references.append({
                 "reference": result.payload["text"],
-                "file": result.payload["fileName"]
+                "file": result.payload["fileName"],
+                "score": result.score
             })
 
-    answer = generateAnswer(user_question, res)
+    answer = generateAnswer(user_question, references)
     if answer.get("error") == "True":
         return {"message": answer.get("message"), "status": 400}
 
     return {
         "answer": answer["message"],
-        "references": res,
+        "references": references,
         "status": 200
     }
-
-
-@app.get("/cleanup")
-def cleanup():
-    try:
-        cleanUP()
-        return {"message": "Cleanup completed successfully", "status": 200}
-    except Exception as e:
-        logging.error("Cleanup failed: %s", str(e))
-        return {"message": "Cleanup failed", "error": str(e), "status": 500}
-
 
 @app.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
@@ -118,3 +115,38 @@ async def upload_files(files: List[UploadFile] = File(...)):
         with open(os.path.join(UPLOAD_DIR, file.filename), "wb") as f:
             f.write(content)
     return {"message": "Files uploaded", "status": 200}
+
+@app.post("/user_cleanup")
+def user_cleanup(request: RequestData):
+
+    UUID = request.data
+
+    try:
+        user_clean_up(UUID)
+        return {"message": "Cleanup completed successfully", "status": 200}
+    except Exception as e:
+        logging.error("Cleanup failed: %s", str(e))
+        return {"message": "Cleanup failed", "error": str(e), "status": 500}
+    
+
+def cleanup():
+    try:
+        global_clean_up()
+        return {"message": "Cleanup completed successfully", "status": 200}
+    except Exception as e:
+        logging.error("Cleanup failed: %s", str(e))
+        return {"message": "Cleanup failed", "error": str(e), "status": 500}
+    
+def scheduled_cleanup():
+    response = cleanup()   
+    print(f"{response}")
+
+@app.on_event("startup")
+def start_scheduler():
+    scheduled_cleanup()
+    scheduler.add_job(scheduled_cleanup, "interval", hours=6)
+    scheduler.start()
+
+@app.on_event("shutdown")
+def shutdown_scheduler():
+    scheduler.shutdown()

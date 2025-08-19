@@ -1,19 +1,53 @@
-export async function GET() {
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
   try {
-    const response = await fetch(process.env.NEXT_PUBLIC_API_ENDPOINT+'learn');
+    // Parse the incoming request body
+    const req_json = await req.json();
+    const UUID = req_json.uuid;
+
+    if (!UUID) {
+      console.error("Invalid input: 'uuid' is missing.");
+      return NextResponse.json(
+        { error: "Invalid input: 'uuid' is required.", status: 400 },
+        { status: 400 }
+      );
+    }
+
+    console.log("Starting learn process for UUID:", UUID);
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}learn`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: UUID }),
+    });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return new Response(JSON.stringify({ message: data.message || "Learn request failed" }), {
-        status: response.status,
-      });
+      console.error("FastAPI /learn request failed:", data);
+      return NextResponse.json(
+        {
+          error: data.message || "Learn request failed.",
+          status: response.status || 500,
+        },
+      );
     }
+    else{
 
-    return new Response(JSON.stringify({ message: data.message, status: 200}));
+      console.log("Learn process completed successfully:", data);
 
+      return NextResponse.json(
+        { message: data.message, status: 200 },
+      );
+
+    }
   } catch (error) {
-    console.error("Error calling FastAPI /learn:", error);
-    return new Response(JSON.stringify({ error: "Learn process failed", status: 500}));
+    console.error("Unexpected error during learn process:", error);
+    return NextResponse.json(
+      { error: "Learn process failed due to an unexpected error.", status: 500 },
+    );
   }
 }

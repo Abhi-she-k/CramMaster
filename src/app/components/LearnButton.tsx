@@ -4,13 +4,21 @@ interface LearnButtonProps {
   uploadReady: boolean;
   filesUploaded: File[];
   setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function LearnButton({ filesUploaded, setLearnReady, uploadReady}: LearnButtonProps) {
+export default function LearnButton({ filesUploaded, setLearnReady, uploadReady, isLoading, setIsLoading}: LearnButtonProps) {
   
   const processFiles = async () => {
+    
     try {
+
+      const UUID = localStorage.getItem("userId")
+
       console.log('Processing files...');
+
+      setIsLoading(true)
 
       const formData = new FormData();
       filesUploaded.forEach((file) => {
@@ -30,10 +38,15 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady}
 
       }
       else{
+
         console.log(`status: ${data_download.status} message: ${data_download.message}`)
         
         const responseLearn = await fetch('api/learn', {
-          method: 'GET'
+          method: 'POST', 
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ uuid: UUID })
         })
 
         const data_response = await responseLearn.json()
@@ -49,6 +62,8 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady}
           console.error('Internal Error Learn Process...');
         }
 
+        setIsLoading(false)
+
       }
 
       // Parse the JSON response
@@ -60,7 +75,7 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady}
   if(uploadReady){
 
     return (
-
+  
       <button
       
         type="button"

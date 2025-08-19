@@ -8,17 +8,16 @@ interface QuestionInputProps {
     setQuestion: React.Dispatch<React.SetStateAction<string>>;
     references: any[];
     setReferences: React.Dispatch<React.SetStateAction<any[]>>;
+    isLoading: boolean;
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-
-
-
-export default function QuestionInput({learnReady, question, setQuestion, references, setReferences}: QuestionInputProps){
+export default function QuestionInput({learnReady, question, setQuestion, references, setReferences, isLoading, setIsLoading}: QuestionInputProps){
 
     const textArea = useRef<HTMLTextAreaElement>(null);
 
     const answerArea = useRef<HTMLTextAreaElement>(null);
-        
+
     const handleTextInput = () => {
         
         const textInput = textArea.current
@@ -32,28 +31,43 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
 
     const handleAsk = async () => {
         
-        const askResponse = await fetch('/api/ask', {
-                method: 'POST',
-                body: JSON.stringify(question)
-            })
+        try{
 
-            const data = await askResponse.json()
+            const UUID = localStorage.getItem("userId")
 
-            console.log(data)
+            const askResponse = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: question, uuid: UUID })
+                })
+    
+                const data = await askResponse.json();
 
-            const answer = answerArea.current
+                if (!askResponse.ok) {
+                    throw new Error(`HTTP error! status: ${askResponse.status} message: ${data?.error}`);
+                } else if (data.status === 200) {
+                    console.log(`status: ${data.status} message: ${data.message}`);
+
+                    const answer = answerArea.current
             
-            if(answer){
-                answer.value = data.answer
-            }
+                    if(answer){
+                        answer.value = data.answer
+                    }
+        
+                    setReferences(data.references)
+        
+                    console.log(references)
 
-            setReferences(data.references)
-
-            console.log(references)
-
-            // if(askResponse.status == 200){
-            //     console.log(askResponse.references)
-            // }
+                } else {
+                    console.error('Internal Error Learn Process...', data);
+                }
+                
+        }
+        catch (error) {
+            console.error('Error during ask process:', error);
+        }
 
     }
 
@@ -78,14 +92,17 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
                     <textarea id="response" ref = { answerArea }rows={10} className="w-200 block p-2.5 w-2xl text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"></textarea>
                 </div>
 
-                <table className="mt-10 w-200 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed mb-10">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <table className="mt-10 w-200 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 table-fixed mb-10 ">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center">
                         <tr>
                             <th scope="col" className="px-6 py-3">
                                 Possible References
                             </th>
                             <th scope="col" className="px-6 py-3">
                                 File
+                            </th>
+                            <th scope="col" className="px-6 py-3">
+                                Similarity Score
                             </th>
                         </tr>
                     </thead>
@@ -97,15 +114,23 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
                                 className="px-6 py-4 font-medium text-gray-900 whitespace-normal break-words dark:text-white max-w-0"
                                 style={{ wordBreak: "break-word" }}
                             >
-                                {item.reference || item.text || ""}
+                                {item.reference || ""}
                             </td>
 
                             <td
                                 scope="row"
-                                className="px-6 py-4 font-medium text-gray-900 whitespace-normal break-words dark:text-white max-w-0"
+                                className="px-6 py-4 font-medium text-gray-900 whitespace-normal break-words dark:text-white max-w-0 text-center"
                                 style={{ wordBreak: "break-word" }}
                             >
-                                {item.file || item.fileName || ""}
+                                {item.file || ""}
+                            </td>
+
+                            <td
+                                scope="row"
+                                className="px-6 py-4 font-medium text-gray-900 whitespace-normal break-words dark:text-white max-w-0 text-center"
+                                style={{ wordBreak: "break-word" }}
+                            >
+                                {item.score || ""}
                             </td>
                         </tr>))}
                     </tbody>

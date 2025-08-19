@@ -17,7 +17,7 @@ export default function RootLayout({
 
       <body>
         <div className="flex justify-center mt-5 bg-transparent">          
-          <div className='absolute left-0 mx-3'>
+          <div className='absolute left-0 px-10 pt-5'>
             <button
               type="button"
               data-twe-ripple-init
@@ -66,7 +66,14 @@ export default function RootLayout({
           </div>
           <div
             className="text-center bg-transparent p-10">
-            <h1 className="text-7xl">CRAMMASTER</h1>
+            
+            <div className='flex'>
+              <img 
+                src="/icon.ico"  
+                className="flex-inital w-16 h-16 mx-2 rounded-xl"
+              />
+              <h1 className="text-7xl">CRAMMASTER</h1>
+            </div>
             <h6 className="text-sm text-right">Created By: Abhishek</h6>
 
           </div>
