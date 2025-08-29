@@ -89,13 +89,20 @@ def ask(request: RequestDataAsk):
     for results in db_query.get("results", []):
         for result in results[1]:
 
-            print(result)
-
             references.append({
                 "reference": result.payload["text"],
                 "file": result.payload["fileName"],
                 "score": result.score
             })
+
+    print(references)
+
+    if(references[0]["score"] < 0.5):
+        return{
+            "answer": "This question does not appear to be relevant to the provided references. Could you please provide a question that is more closely aligned with the uploaded topics?",
+            "references": [],
+            "status": 200
+        }
 
     answer = generateAnswer(user_question, references)
     if answer.get("error") == "True":

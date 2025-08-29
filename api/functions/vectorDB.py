@@ -19,6 +19,7 @@ logging.basicConfig(
 qdrant_client = QdrantClient(
     url=os.environ.get("QDRANT_URL"),
     api_key=os.environ.get("QDRANT_API_KEY"),
+    timeout=60
 )
 
 def writeToQdrantDB(embeddings, fileName, UUID):
@@ -99,12 +100,14 @@ def global_clean_up():
     try:
         collections = qdrant_client.get_collections().collections
 
+    
         for collection_info in collections:
             collection_name = collection_info.name
             print(f"Deleting collection: {collection_name}")
             qdrant_client.delete_collection(collection_name=collection_name)
 
         print("All collections deleted.")
+
     except Exception as e:
         logging.error(f"Error during cleanup: {str(e)}")\
 

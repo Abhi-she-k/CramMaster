@@ -36,13 +36,16 @@ export async function POST(req: NextRequest) {
         },
       );
     }
+    else{
 
-    console.log("Uploaded successfully:", uploadData);
+      console.log("Uploaded successfully:", uploadData);
 
-    return NextResponse.json(
-      { message: "File uploaded successfully", status: 200 },
-      { status: 200 }
-    );
+      return NextResponse.json(
+        { message: "File uploaded successfully", status: 200 },
+        { status: 200 }
+      );
+
+    }
 
   } catch (error) {
     console.error("Unexpected error during file upload:", error);

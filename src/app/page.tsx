@@ -5,6 +5,10 @@ import QuestionInput from './components/QuestionInput';
 
 import { useState,  useEffect } from 'react';
 
+interface LoadingState {
+  message: string;
+  status: boolean;
+}
 
 export default function Home() {
   
@@ -14,8 +18,13 @@ export default function Home() {
   const [question, setQuestion] = useState<string>("");
   const [reference, setReference] = useState<Array<any>>([]);
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<LoadingState>({
+    message: "Loading",
+    status: false,
+  });
+    
   const [userId, setUserId] = useState("");
+
 
   useEffect(() => {
 
@@ -58,6 +67,13 @@ export default function Home() {
           setIsLoading = {setIsLoading}
           isLoading={isLoading} 
         />
+        { isLoading["status"] ? (
+          <div className="flex flex-col justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-15 w-15 border-t-2 border-white"></div>
+          <p className="animate-pulse mt-2 text-white">{isLoading["message"]}</p>
+          </div>
+          ) : ("")
+        }
         <QuestionInput 
           learnReady={learnReady}  
           question={question} 
@@ -68,14 +84,6 @@ export default function Home() {
           isLoading={isLoading}  
         />
 
-        { isLoading ? (
-
-          <div className="flex flex-col justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-15 w-15 border-t-2 border-white"></div>
-          <p className="animate-pulse mt-2 text-white">Loading...</p>
-          </div>
-          ) : ("")
-        }
       </div>
     </div>
 

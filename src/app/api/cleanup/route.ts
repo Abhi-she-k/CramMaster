@@ -71,9 +71,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("Backend cleanup completed successfully.");
+    console.log("Backend cleanup completed.");
     return NextResponse.json(
-      { message: "Cleanup finished successfully.", status: 200 }
+      { message: "Cleanup response completed.", status: 200 }
     );
   } catch (err) {
     console.error("Error during cleanup:", err);

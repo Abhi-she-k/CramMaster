@@ -2,14 +2,19 @@
 
 import { useRef } from 'react';
 
+interface LoadingState {
+    message: string;
+    status: boolean;
+  }
+
 interface QuestionInputProps {
     learnReady: boolean;
     question: string;
     setQuestion: React.Dispatch<React.SetStateAction<string>>;
     references: any[];
     setReferences: React.Dispatch<React.SetStateAction<any[]>>;
-    isLoading: boolean;
-    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    isLoading: LoadingState;
+    setIsLoading: React.Dispatch<React.SetStateAction<LoadingState>>;
 }
 
 export default function QuestionInput({learnReady, question, setQuestion, references, setReferences, isLoading, setIsLoading}: QuestionInputProps){
@@ -34,6 +39,9 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
         try{
 
             const UUID = localStorage.getItem("userId")
+
+            setIsLoading({message: "Retrieving answer...",
+                status: true})
 
             const askResponse = await fetch('/api/ask', {
                     method: 'POST',
@@ -68,6 +76,9 @@ export default function QuestionInput({learnReady, question, setQuestion, refere
         catch (error) {
             console.error('Error during ask process:', error);
         }
+
+        setIsLoading({message: "Loading",
+            status: false})
 
     }
 

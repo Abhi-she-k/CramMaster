@@ -1,11 +1,16 @@
 'use client';
 
+interface LoadingState {
+  message: string;
+  status: boolean;
+}
+
 interface LearnButtonProps {
   uploadReady: boolean;
   filesUploaded: File[];
   setLearnReady: React.Dispatch<React.SetStateAction<boolean>>;
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  isLoading: LoadingState;
+  setIsLoading: React.Dispatch<React.SetStateAction<LoadingState>>;
 }
 
 export default function LearnButton({ filesUploaded, setLearnReady, uploadReady, isLoading, setIsLoading}: LearnButtonProps) {
@@ -18,7 +23,8 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady,
 
       console.log('Processing files...');
 
-      setIsLoading(true)
+      setIsLoading({message: "Downloading file(s)...",
+                    status: true})
 
       const formData = new FormData();
       filesUploaded.forEach((file) => {
@@ -40,6 +46,9 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady,
       else{
 
         console.log(`status: ${data_download.status} message: ${data_download.message}`)
+
+        setIsLoading({message: "Processing Files and Learning Content...",
+          status: true})
         
         const responseLearn = await fetch('api/learn', {
           method: 'POST', 
@@ -62,14 +71,17 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady,
           console.error('Internal Error Learn Process...');
         }
 
-        setIsLoading(false)
-
+        setIsLoading({message: "Loading",
+          status: false})
       }
 
       // Parse the JSON response
     } catch (error) {
       console.error('Error processing files:', error);
     }
+
+    setIsLoading({message: "Loading",
+      status: false})
   };
 
   if(uploadReady){

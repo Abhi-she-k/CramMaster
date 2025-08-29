@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
     else{
 
-      console.log("Learn process completed successfully:", data);
+      console.log("Learn Process Finished - Response:", data);
 
       return NextResponse.json(
         { message: data.message, status: 200 },
