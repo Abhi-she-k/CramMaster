@@ -1,6 +1,3 @@
-import path from "path";
-import { unlink } from "fs/promises";
-import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -24,32 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
-    console.log("Starting cleanup process for UUID:", UUID);
-
-    if (!fs.existsSync(fileStoragePath)) {
-      console.warn(`Directory does not exist: ${fileStoragePath}`);
-      return NextResponse.json(
-        { message: "No files to clean up.", status: 200 }
-      );
-    }
-
-    const directoryContent = fs.readdirSync(fileStoragePath);
-    for (const fileName of directoryContent) {
-      const filePath = path.join(fileStoragePath, fileName);
-
-      try {
-        if (fs.statSync(filePath).isFile()) {
-          await unlink(filePath);
-          console.log(`Deleted file: ${filePath}`);
-        }
-      } catch (err) {
-        console.error(`Failed to delete file: ${filePath}`, err);
-      }
-    }
-
-
-    console.log("Local file cleanup completed.");
+    console.log("Starting backend cleanup process for UUID:", UUID);
 
     const cleanupAPIResponse = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}user_cleanup`,
       {
@@ -71,7 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("Backend cleanup completed.");
+    console.log("Backend cleanup completed for: ", UUID);
     return NextResponse.json(
       { message: "Cleanup response completed.", status: 200 }
     );

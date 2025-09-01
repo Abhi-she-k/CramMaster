@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import UploadFile, File, FastAPI
+from fastapi import UploadFile, File, FastAPI, Form
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from os import listdir
@@ -41,6 +41,7 @@ class RequestDataAsk(BaseModel):
     UUID: str
     question: str
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -52,25 +53,30 @@ def learn(request: RequestData):
     UUID = request.data
 
     for file in listdir(UPLOAD_DIR):
-        file_path = join(UPLOAD_DIR, file)
 
-        if isfile(file_path):
-            chunks_response = textChuncking(file_path)
-            if chunks_response.get("error") == "True":
-                logging.error(f"Chunking failed for {file}: {chunks_response.get('message')}")
-                return {"message": chunks_response.get("message"), "status": 400}
+        file_uuid = (file.split("_"))[0]
+        print(file_uuid)
 
-            vector_embeddings = getVectorEmbedding(chunks_response.get("chunks"))
-            if vector_embeddings.get("error") == "True":
-                logging.error(f"Embedding failed for {file}: {vector_embeddings.get('message')}")
-                return {"message": vector_embeddings.get("message"), "status": 400}
+        if(UUID == file_uuid):
+            file_path = join(UPLOAD_DIR, file)
 
-            db_write = writeToQdrantDB(vector_embeddings, file, UUID)
-            if db_write.get("error") == "True":
-                logging.error(f"DB write failed for {file}: {db_write.get('message')}")
-                return {"message": db_write.get("message"), "status": 400}
+            if isfile(file_path):
+                chunks_response = textChuncking(file_path)
+                if chunks_response.get("error") == "True":
+                    logging.error(f"Chunking failed for {file}: {chunks_response.get('message')}")
+                    return {"message": chunks_response.get("message"), "status": 400}
 
-    return {"message": "Learn process completed successfully.", "status": 200}
+                vector_embeddings = getVectorEmbedding(chunks_response.get("chunks"))
+                if vector_embeddings.get("error") == "True":
+                    logging.error(f"Embedding failed for {file}: {vector_embeddings.get('message')}")
+                    return {"message": vector_embeddings.get("message"), "status": 400}
+
+                db_write = writeToQdrantDB(vector_embeddings, file, UUID)
+                if db_write.get("error") == "True":
+                    logging.error(f"DB write failed for {file}: {db_write.get('message')}")
+                    return {"message": db_write.get("message"), "status": 400}
+
+    return {"message": "Learn process completed .", "status": 200}
 
 
 @app.post("/ask")
@@ -115,11 +121,11 @@ def ask(request: RequestDataAsk):
     }
 
 @app.post("/upload")
-async def upload_files(files: List[UploadFile] = File(...)):
+async def upload_files(uuid: str = Form(...), files: List[UploadFile] = File(...)):
     
     for file in files:
         content = await file.read()
-        with open(os.path.join(UPLOAD_DIR, file.filename), "wb") as f:
+        with open(os.path.join(UPLOAD_DIR, f"{uuid}_{file.filename}"), "wb") as f:
             f.write(content)
     return {"message": "Files uploaded", "status": 200}
 

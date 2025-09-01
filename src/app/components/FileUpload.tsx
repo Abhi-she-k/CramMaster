@@ -17,22 +17,19 @@ export default function FileUpload({ filesUploaded, setFilesUploaded, setLearnRe
 
     const UUID = localStorage.getItem("userId")
       
-    const cleanup = await fetch('/api/cleanup', {
+    const cleanupBackend = await fetch('/api/cleanupBackend', {
         method: 'POST', 
         body: JSON.stringify({ uuid: UUID })
     });
 
-    const data = await cleanup.json();
+    const dataBackendCleanup = await cleanupBackend.json();
 
-    if (!cleanup.ok) {
-      throw new Error(`HTTP error! status: ${cleanup.status} message: ${data?.message || "Clean up request failed"}`);
-    } else if (data.status === 200) {
-      console.log(`status: ${cleanup.status} message: ${data.message}`);
-  
-    } else {
-      console.error('Internal Error Clean Process...', data);
+    if (!cleanupBackend.ok) {
+      throw new Error(`HTTP error! status: ${dataBackendCleanup.status} message: ${dataBackendCleanup?.message || "Clean up request failed"}`);
     }
-    
+      
+    console.log(`status: ${dataBackendCleanup.status} message: ${dataBackendCleanup.message}`);
+  
     const files = event.target.files;
 
     if (files) {

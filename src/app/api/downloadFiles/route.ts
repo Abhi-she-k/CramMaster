@@ -2,27 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const files = await req.formData();
 
-    if (!files || !files.entries().next().value) {
-      console.error("No files provided in the request.");
+    const fileInfo = await req.formData()
+
+    if (!fileInfo || !fileInfo.entries().next().value) {
+      console.error("No info provided in the request.");
       return NextResponse.json(
-        { error: "No files provided.", status: 400 },
+        { error: "No info provided.", status: 400 },
       );
     }
 
     console.log("Received files for upload.");
 
-    const form = new FormData();
-    for (const [_, file] of files.entries()) {
-      form.append("files", file);
-    }
-
-    console.log("FormData prepared for upload.");
-
     const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}upload`, {
       method: "POST",
-      body: form,
+      body: fileInfo,
     });
 
     const uploadData = await uploadResponse.json();

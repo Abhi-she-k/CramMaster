@@ -27,55 +27,68 @@ export default function LearnButton({ filesUploaded, setLearnReady, uploadReady,
                     status: true})
 
       const formData = new FormData();
-      filesUploaded.forEach((file) => {
-        formData.append('file', file); // Append each file to the FormData object
-      });
+      
+      if (!UUID) {
+        throw new Error("No UUID found in localStorage");
+      }
+      
+      formData.append("uuid", UUID);
+
+      for (const file of filesUploaded) {
+        formData.append('files', file); 
+      };
 
       const responseDownloadFiles = await fetch('/api/downloadFiles', {
         method: 'POST', 
         body: formData
       });
 
-      const data_download = await responseDownloadFiles.json();
+      const dataDownloadResponse = await responseDownloadFiles.json();
 
       // Check if the response is successful
       if (!responseDownloadFiles.ok) {
-        throw new Error(`HTTP error! status: ${data_download.status} message: ${data_download.error}`);
-
-      }
-      else{
-
-        console.log(`status: ${data_download.status} message: ${data_download.message}`)
-
-        setIsLoading({message: "Processing Files and Learning Content...",
-          status: true})
-        
-        const responseLearn = await fetch('api/learn', {
-          method: 'POST', 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ uuid: UUID })
-        })
-
-        const data_response = await responseLearn.json()
-
-        if (!responseLearn.ok){
-          throw new Error(`HTTP error! status: ${data_response.status} message: ${data_response.error}`);
-        }
-        else if(data_response.status == 200){
-          console.log(`status: ${data_response.status} message: ${data_response.message}`)
-          setLearnReady(true)
-        }
-        else{
-          console.error('Internal Error Learn Process...');
-        }
-
-        setIsLoading({message: "Loading",
-          status: false})
+        throw new Error(`HTTP error! status: ${dataDownloadResponse.status} message: ${dataDownloadResponse.error}`);
       }
 
-      // Parse the JSON response
+      console.log(`status: ${dataDownloadResponse.status} message: ${dataDownloadResponse.message}`)
+
+      setIsLoading({message: "Processing Files and Learning Content...",
+        status: true})
+      
+      const responseLearn = await fetch('api/learn', {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ uuid: UUID })
+      })
+
+      const dataLearnResponse = await responseLearn.json()
+
+      if (!responseLearn.ok){
+        throw new Error(`HTTP error! status: ${dataLearnResponse.status} message: ${dataLearnResponse.error}`);
+      }
+
+      console.log(`status: ${dataLearnResponse.status} message: ${dataLearnResponse.message}`)
+
+      console.log("Local clean up on user: ", UUID)
+
+      setIsLoading({message: "Cleaning Up",
+        status: true})
+
+      const localCleanup = await fetch('/api/cleanupLocal', {
+        method: 'POST', 
+        body: JSON.stringify({ uuid: UUID })
+      });
+
+      const localCleanupResponse = await localCleanup.json()
+
+      if (!localCleanup.ok){
+        throw new Error(`HTTP error! status: ${localCleanupResponse.status} message: ${localCleanupResponse.error}`);
+      }
+          
+      setLearnReady(true)
+
     } catch (error) {
       console.error('Error processing files:', error);
     }
